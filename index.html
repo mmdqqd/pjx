@@ -3,123 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vue 天气 & 新闻查询</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.min.css">
+    <title>Vue 今日新闻</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>  <!-- Vue 3 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Axios CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script> <!-- ECharts CDN -->
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        .container { max-width: 800px; margin: auto; display: flex; flex-direction: column; align-items: center; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: white; padding: 20px; border-radius: 10px; text-align: center; }
-        .chart { width: 100%; height: 300px; margin-top: 20px; }
-        .news-container { width: 100%; display: flex; flex-direction: column; align-items: center; }
-        .news-card { width: 100%; max-width: 600px; text-align: left; margin-top: 20px; padding: 15px; border-radius: 8px; background: #f9f9f9; }
+        .container { max-width: 800px; margin: auto; padding: 20px; }
+        .news-card { margin-top: 20px; padding: 20px; background-color: #f9f9f9; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .news-card h2 { margin-bottom: 10px; font-size: 24px; color: #333; }
         ul { list-style-type: none; padding: 0; }
         li { margin: 10px 0; cursor: pointer; color: #409EFF; }
         li:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-<div id="app" class="container">
-    <button @click="showModal = true">查询城市</button>
-    <div class="modal" :class="{ show: showModal }">
-        <div class="modal-content">
-            <h2>输入城市</h2>
-            <input v-model="city" @input="fetchCoordinates" placeholder="输入城市">
-            <p v-if="latitude && longitude">🌍 纬度: {{ latitude }}, 🌎 经度: {{ longitude }}</p>
-            <br>
-            <button @click="showModal = false">取消</button>
-            <button @click="confirmCity">确认</button>
-        </div>
-    </div>
-    <div v-if="weatherData">
-        <h2>🌤 天气信息（{{ city }}）</h2>
-        <p>当前温度：{{ weatherData.current.temperature_2m }}°C</p>
-        <div id="chart" class="chart"></div>
-    </div>
-    <div class="news-container">
-        <el-input v-model="searchQuery" placeholder="输入搜索关键词" clearable></el-input>
-        <el-button @click="searchDates" type="primary">搜索</el-button>
-        <el-card v-if="searchResults.length > 0" class="news-card">
-            <h2>搜索结果：</h2>
-            <ul>
-                <li v-for="(item, index) in searchResults" :key="index" @click="fetchNews(item.src)">
-                    {{ item.src }}
-                </li>
-            </ul>
-        </el-card>
-        <el-date-picker v-model="selectedDate" type="date" placeholder="选择日期" format="YYYY/MM/DD" value-format="YYYY/MM/DD" @change="fetchNews"></el-date-picker>
-        <el-card v-if="newsData && newsData.content" class="news-card">
-            <div v-if="newsData.content.length > 0">
-                <h2>{{ newsData.date }} 新闻列表</h2>
+
+<div id="app">
+    <div class="container">
+        <div v-if="newsData">
+            <div class="news-card">
+                <h2>{{ newsData.date }} 今日新闻</h2>
                 <ul>
-                    <li v-for="(item, index) in newsData.content" :key="index">{{ item }}</li>
+                    <li v-for="(item, index) in newsData.content" :key="index">
+                        {{ item }}
+                    </li>
                 </ul>
             </div>
-            <div v-else><p>未找到该日期的新闻数据。</p></div>
-        </el-card>
+        </div>
+        <div v-else>
+            <p>加载中，稍后再试...</p>
+        </div>
     </div>
 </div>
+
 <script>
 const app = Vue.createApp({
     data() {
-        return { showModal: false, city: '', latitude: null, longitude: null, weatherData: null, searchQuery: '', searchResults: [], newsData: null, selectedDate: '' };
+        return {
+            newsData: null
+        };
     },
     methods: {
-        async fetchCoordinates() {
-            if (!this.city) return;
-            const apiKey = 'a5b6fe84acda49a99de7eb6d485d906d';
-            const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(this.city)}&key=${apiKey}`;
+        // 获取当天日期
+        getCurrentDate() {
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}/${month}/${day}`;  // 格式为 YYYY/MM/DD
+        },
+        // 获取当天新闻
+        async fetchNews() {
+            const today = this.getCurrentDate();
             try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.results.length > 0) {
-                    this.latitude = data.results[0].geometry.lat;
-                    this.longitude = data.results[0].geometry.lng;
-                }
+                const apiUrl = `https://news.ravelloh.top/data/${today}.json`;  // 获取该日期的新闻数据
+                const response = await axios.get(apiUrl);
+                this.newsData = response.data;  // 存储返回的新闻数据
             } catch (error) {
-                console.error('获取经纬度失败:', error);
+                console.error('获取新闻数据失败:', error);
+                this.newsData = null;  // 清空新闻数据
             }
-        },
-        async confirmCity() {
-            if (!this.latitude || !this.longitude) return alert('加载中！');
-            this.showModal = false;
-            await this.fetchWeatherData();
-        },
-        async fetchWeatherData() {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${this.latitude}&longitude=${this.longitude}&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
-            try {
-                const response = await axios.get(url);
-                this.weatherData = response.data;
-                this.$nextTick(() => this.drawChart());
-            } catch (error) {
-                console.error('获取天气数据失败:', error);
-            }
-        },
-        drawChart() {
-            if (!this.weatherData) return;
-            const chart = echarts.init(document.getElementById('chart'));
-            const option = {
-                title: {text: '过去7天温度变化', left: 'center'},
-                tooltip: {trigger: 'axis'},
-                xAxis: {type: 'category', data: this.weatherData.daily.time},
-                yAxis: {type: 'value'},
-                series: [
-                    {name: '最高温', type: 'line', data: this.weatherData.daily.temperature_2m_max},
-                    {name: '最低温', type: 'line', data: this.weatherData.daily.temperature_2m_min}
-                ]
-            };
-            chart.setOption(option);
-            window.addEventListener('resize', () => chart.resize());
         }
+    },
+    mounted() {
+        this.fetchNews();  // 页面加载时自动获取今日新闻
     }
 });
-app.use(ElementPlus);
+
 app.mount('#app');
 </script>
+
 </body>
 </html>
