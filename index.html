@@ -283,7 +283,7 @@
 
                 <!-- 背面 - 天气 -->
                 <div class="card-face card-back">
-                    <h2>天气查询</h2>
+                    <h2>📅天气查询📅</h2>
                     <button @click="showModal = true">选择城市</button>
 
                     <div class="weather-info" v-if="weatherData">
@@ -304,7 +304,7 @@
         <!-- 城市选择弹出窗口 -->
         <div class="modal" :class="{ show: showModal }">
             <div class="modal-content">
-                <h2>输入城市</h2>
+                <h2>❤️ 输入城市❤️ </h2>
                 <input v-model="cityInput" @input="fetchCoordinates" placeholder="输入城市">
                 <p v-if="latitude && longitude">🌍 纬度: {{ latitude }}, 🌎 经度: {{ longitude }}</p>
                 <br>
