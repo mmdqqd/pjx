@@ -1,78 +1,415 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vue 今日新闻</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>  <!-- Vue 3 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Axios CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script> <!-- ECharts CDN -->
+    <title>pppppjjjjjxxxxx</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        .container { max-width: 800px; margin: auto; padding: 20px; }
-        .news-card { margin-top: 20px; padding: 20px; background-color: #f9f9f9; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        .news-card h2 { margin-bottom: 10px; font-size: 24px; color: #333; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin: 10px 0; cursor: pointer; color: #409EFF; }
-        li:hover { text-decoration: underline; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card-container {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            /* 明确高度 */
+            position: relative;
+            margin: 20px auto;
+            /* 添加外边距 */
+        }
+
+        .card {
+            width: 500px;
+            height: 500px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            background: white;
+            padding: 25px 15px;
+            /* 调整内边距 */
+            box-sizing: border-box;
+            display: flex;
+            /* 弹性布局 */
+            flex-direction: column;
+            /* 垂直排列 */
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        .flip-button {
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 80px;
+            background: #409EFF;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        /* 天气图表容器 */
+        .weather-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 调整按钮位置 */
+        .flip-button {
+            right: -25px;
+            /* 增大右侧间距 */
+            width: 45px;
+            height: 90px;
+        }
+
+        .flip-button:hover {
+            background: #66b1ff;
+            right: -25px;
+            width: 30px;
+        }
+
+        .flip-button::after {
+            content: "→";
+        }
+
+        .card.flipped .flip-button::after {
+            content: "←";
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #409EFF;
+            padding-bottom: 10px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            transition: all 0.3s;
+            word-break: break-word;
+            /* 允许文字换行 */
+            line-height: 1.5;
+            white-space: normal !important;
+            /* 强制正常换行 */
+        }
+
+        li:hover {
+            background: #e6f7ff;
+            transform: translateX(5px);
+        }
+
+        .chart {
+            width: 100%;
+            height: 250px;
+            margin-top: 20px;
+        }
+
+        .weather-info {
+            margin-top: 20px;
+        }
+
+        .current-temp {
+            font-size: 24px;
+            font-weight: bold;
+            color: #409EFF;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #409EFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #66b1ff;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+
+        .news-container {
+            flex: 1;
+            /* 占据剩余空间 */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* 隐藏内部溢出 */
+            margin-top: 10px;
+        }
+
+        .news-list {
+            flex: 1;
+            overflow-y: auto;
+            /* 添加垂直滚动条 */
+            padding-right: 10px;
+            /* 为滚动条留出空间 */
+            margin: 0;
+            scrollbar-width: thin;
+            /* Firefox */
+            scrollbar-color: #409EFF #f0f0f0;
+            /* Firefox */
+        }
+
+        /* 自定义滚动条样式 (Chrome/Safari/Edge) */
+        .news-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .news-list::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+
+        .news-list::-webkit-scrollbar-thumb {
+            background-color: #409EFF;
+            border-radius: 3px;
+        }
+
+        .news-list li {
+            margin: 10px 0;
+            padding: 12px 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            word-break: break-word;
+            /* 长单词或URL自动换行 */
+            line-height: 1.5;
+        }
     </style>
 </head>
+
 <body>
 
-<div id="app">
-    <div class="container">
-        <div v-if="newsData">
-            <div class="news-card">
-                <h2>{{ newsData.date }} 今日新闻</h2>
-                <ul>
-                    <li v-for="(item, index) in newsData.content" :key="index">
-                        {{ item }}
-                    </li>
-                </ul>
+    <div id="app">
+        <div class="card-container">
+            <div class="card" :class="{ flipped: isFlipped }">
+                <!-- 正面 - 新闻 -->
+                <div class="card-face card-front">
+                    <h2>{{ newsData ? newsData.date + ' 今日新闻' : '今日新闻' }}</h2>
+                    <div v-if="newsData" class="news-container">
+                        <ul class="news-list">
+                            <li v-for="(item, index) in newsData.content" :key="index">
+                                {{ item }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div v-else class="loading">
+                        <p>新闻加载中...</p>
+                    </div>
+                </div>
+
+                <!-- 背面 - 天气 -->
+                <div class="card-face card-back">
+                    <h2>天气查询</h2>
+                    <button @click="showModal = true">选择城市</button>
+
+                    <div class="weather-info" v-if="weatherData">
+                        <h3>{{ city }} 天气</h3>
+                        <p class="current-temp">当前温度：{{ weatherData.current.temperature_2m }}°C</p>
+                        <div id="chart" class="chart"></div>
+                    </div>
+                    <div v-else class="loading">
+                        <p>请选择城市查询天气</p>
+                    </div>
+                </div>
+
+                <!-- 翻转按钮 -->
+                <button class="flip-button" @click="isFlipped = !isFlipped"></button>
             </div>
         </div>
-        <div v-else>
-            <p>加载中，稍后再试...</p>
+
+        <!-- 城市选择弹出窗口 -->
+        <div class="modal" :class="{ show: showModal }">
+            <div class="modal-content">
+                <h2>输入城市</h2>
+                <input v-model="cityInput" @input="fetchCoordinates" placeholder="输入城市">
+                <p v-if="latitude && longitude">🌍 纬度: {{ latitude }}, 🌎 经度: {{ longitude }}</p>
+                <br>
+                <button @click="showModal = false">取消</button>
+                <button @click="confirmCity">确认</button>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-const app = Vue.createApp({
-    data() {
-        return {
-            newsData: null
-        };
-    },
-    methods: {
-        // 获取当天日期
-        getCurrentDate() {
-            const date = new Date();
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}/${month}/${day}`;  // 格式为 YYYY/MM/DD
-        },
-        // 获取当天新闻
-        async fetchNews() {
-            const today = this.getCurrentDate();
-            try {
-                const apiUrl = `https://news.ravelloh.top/data/${today}.json`;  // 获取该日期的新闻数据
-                const response = await axios.get(apiUrl);
-                this.newsData = response.data;  // 存储返回的新闻数据
-            } catch (error) {
-                console.error('获取新闻数据失败:', error);
-                this.newsData = null;  // 清空新闻数据
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    isFlipped: false,
+
+                    // 新闻数据
+                    newsData: null,
+
+                    // 天气数据
+                    showModal: false,
+                    cityInput: '',
+                    city: '未选择',
+                    latitude: null,
+                    longitude: null,
+                    weatherData: null
+                };
+            },
+            methods: {
+                // 新闻相关方法
+                getCurrentDate() {
+                    const date = new Date();
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}/${month}/${day}`;
+                },
+                async fetchNews() {
+                    const today = this.getCurrentDate();
+                    try {
+                        const apiUrl = `https://news.ravelloh.top/data/${today}.json`;
+                        const response = await axios.get(apiUrl);
+                        this.newsData = response.data;
+                    } catch (error) {
+                        console.error('获取新闻数据失败:', error);
+                        this.newsData = null;
+                    }
+                },
+
+                // 天气相关方法
+                async fetchCoordinates() {
+                    if (!this.cityInput) return;
+                    const apiKey = 'a5b6fe84acda49a99de7eb6d485d906d';
+                    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(this.cityInput)}&key=${apiKey}`;
+                    try {
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        if (data.results.length > 0) {
+                            this.latitude = data.results[0].geometry.lat;
+                            this.longitude = data.results[0].geometry.lng;
+                        }
+                    } catch (error) {
+                        console.error('获取经纬度失败:', error);
+                    }
+                },
+                async confirmCity() {
+                    if (!this.latitude || !this.longitude) return alert('请等待位置信息加载完成');
+                    this.city = this.cityInput || '未知城市';
+                    this.showModal = false;
+                    await this.fetchWeatherData();
+                },
+                async fetchWeatherData() {
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${this.latitude}&longitude=${this.longitude}&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+                    try {
+                        const response = await axios.get(url);
+                        this.weatherData = response.data;
+                        this.$nextTick(() => this.drawChart());
+                    } catch (error) {
+                        console.error('获取天气数据失败:', error);
+                    }
+                },
+                drawChart() {
+                    if (!this.weatherData) return;
+                    const chart = echarts.init(document.getElementById('chart'));
+                    const option = {
+                        title: { text: '过去7天温度变化', left: 'center' },
+                        tooltip: { trigger: 'axis' },
+                        xAxis: { type: 'category', data: this.weatherData.daily.time },
+                        yAxis: { type: 'value', name: '温度 (°C)' },
+                        series: [
+                            { name: '最高温', type: 'line', data: this.weatherData.daily.temperature_2m_max, itemStyle: { color: '#ff6b6b' } },
+                            { name: '最低温', type: 'line', data: this.weatherData.daily.temperature_2m_min, itemStyle: { color: '#409EFF' } }
+                        ]
+                    };
+                    chart.setOption(option);
+                    window.addEventListener('resize', () => chart.resize());
+                }
+            },
+            mounted() {
+                this.fetchNews();  // 加载新闻
             }
-        }
-    },
-    mounted() {
-        this.fetchNews();  // 页面加载时自动获取今日新闻
-    }
-});
+        });
 
-app.mount('#app');
-</script>
+        app.mount('#app');
+    </script>
 
 </body>
+
 </html>
