@@ -3,56 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vue 天气查询</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>  <!-- Vue 3 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Axios CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script> <!-- ECharts CDN -->
+    <title>Vue 天气 & 新闻查询</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.min.css">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        .container { max-width: 400px; margin: auto; }
+        .container { max-width: 800px; margin: auto; display: flex; flex-direction: column; align-items: center; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
         .modal.show { display: flex; }
         .modal-content { background: white; padding: 20px; border-radius: 10px; text-align: center; }
         .chart { width: 100%; height: 300px; margin-top: 20px; }
+        .news-container { width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .news-card { width: 100%; max-width: 600px; text-align: left; margin-top: 20px; padding: 15px; border-radius: 8px; background: #f9f9f9; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin: 10px 0; cursor: pointer; color: #409EFF; }
+        li:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-
-<div id="app">
-    <div class="container">
-        <button @click="showModal = true">查询城市</button>
-
-        <!-- 弹出窗口 -->
-        <div class="modal" :class="{ show: showModal }">
-            <div class="modal-content">
-                <h2>输入城市</h2>
-                <input v-model="city" @input="fetchCoordinates" placeholder="输入城市">
-                <p v-if="latitude && longitude">🌍 纬度: {{ latitude }}, 🌎 经度: {{ longitude }}</p>
-                <br>
-                <button @click="showModal = false">取消</button>
-                <button @click="confirmCity">确认</button>
-            </div>
-        </div>
-
-        <!-- 显示天气信息 -->
-        <div v-if="weatherData">
-            <h2>🌤 天气信息（{{ city }}）</h2>
-            <p>当前温度：{{ weatherData.current.temperature_2m }}°C</p>
-            <div id="chart" class="chart"></div>
+<div id="app" class="container">
+    <button @click="showModal = true">查询城市</button>
+    <div class="modal" :class="{ show: showModal }">
+        <div class="modal-content">
+            <h2>输入城市</h2>
+            <input v-model="city" @input="fetchCoordinates" placeholder="输入城市">
+            <p v-if="latitude && longitude">🌍 纬度: {{ latitude }}, 🌎 经度: {{ longitude }}</p>
+            <br>
+            <button @click="showModal = false">取消</button>
+            <button @click="confirmCity">确认</button>
         </div>
     </div>
+    <div v-if="weatherData">
+        <h2>🌤 天气信息（{{ city }}）</h2>
+        <p>当前温度：{{ weatherData.current.temperature_2m }}°C</p>
+        <div id="chart" class="chart"></div>
+    </div>
+    <div class="news-container">
+        <el-input v-model="searchQuery" placeholder="输入搜索关键词" clearable></el-input>
+        <el-button @click="searchDates" type="primary">搜索</el-button>
+        <el-card v-if="searchResults.length > 0" class="news-card">
+            <h2>搜索结果：</h2>
+            <ul>
+                <li v-for="(item, index) in searchResults" :key="index" @click="fetchNews(item.src)">
+                    {{ item.src }}
+                </li>
+            </ul>
+        </el-card>
+        <el-date-picker v-model="selectedDate" type="date" placeholder="选择日期" format="YYYY/MM/DD" value-format="YYYY/MM/DD" @change="fetchNews"></el-date-picker>
+        <el-card v-if="newsData && newsData.content" class="news-card">
+            <div v-if="newsData.content.length > 0">
+                <h2>{{ newsData.date }} 新闻列表</h2>
+                <ul>
+                    <li v-for="(item, index) in newsData.content" :key="index">{{ item }}</li>
+                </ul>
+            </div>
+            <div v-else><p>未找到该日期的新闻数据。</p></div>
+        </el-card>
+    </div>
 </div>
-
 <script>
 const app = Vue.createApp({
     data() {
-        return {
-            showModal: false,
-            city: '',
-            latitude: null,
-            longitude: null,
-            weatherData: null
-        };
+        return { showModal: false, city: '', latitude: null, longitude: null, weatherData: null, searchQuery: '', searchResults: [], newsData: null, selectedDate: '' };
     },
     methods: {
         async fetchCoordinates() {
@@ -103,9 +118,8 @@ const app = Vue.createApp({
         }
     }
 });
-
+app.use(ElementPlus);
 app.mount('#app');
 </script>
-
 </body>
 </html>
