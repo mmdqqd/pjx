@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=8a984adfc83e3ab48c487fee10fc21bd"></script>
     <style>
        
         body {
@@ -286,7 +287,7 @@
                 <!-- 背面 - 天气 -->
                 <div class="card-face card-back">
                     <h2>📅天气查询📅</h2>
-                    <button @click="showModal = true">选择城市[支持全球语言输入]</button>
+                    <button @click="showModal = true">选择城市</button>
                     <div class="news-list">
                     <div class="weather-info" v-if="weatherData">
                         <h3>{{ city }} 天气</h3>
@@ -329,7 +330,7 @@
                     // 天气数据
                     showModal: false,
                     cityInput: '',
-                    city: '未选择',
+                    city: '本地定位',
                     latitude: null,
                     longitude: null,
                     weatherData: null
@@ -378,7 +379,26 @@
                     this.showModal = false;
                     await this.fetchWeatherData();
                 },
+                getUserLocation() {
+                    AMap.plugin('AMap.Geolocation', () => {
+                        var geolocation = new AMap.Geolocation({ enableHighAccuracy: true, timeout: 10000 });
+                        geolocation.getCurrentPosition((status, result) => {
+                            if (status === 'complete') {
+                                this.latitude = result.position.lat;
+                                this.longitude = result.position.lng;
+                                console.log(`定位成功: 经度 ${this.longitude}, 纬度 ${this.latitude}`);
+                                this.fetchWeatherData();  // 获取天气数据
+                            } else {
+                                console.error('定位失败:', result.message);
+                            }
+                        });
+                    });
+                },
                 async fetchWeatherData() {
+                    if (!this.latitude || !this.longitude) {
+                        console.error("经纬度未获取成功");
+                        return;
+                    }
                     const url = `https://api.open-meteo.com/v1/forecast?latitude=${this.latitude}&longitude=${this.longitude}&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
                     try {
                         const response = await axios.get(url);
@@ -392,7 +412,7 @@
                     if (!this.weatherData) return;
                     const chart = echarts.init(document.getElementById('chart'));
                     const option = {
-                        title: { text: '未来7天温度变化', left: 'center' },
+                        title: { text: '过去7天温度变化', left: 'center' },
                         tooltip: { trigger: 'axis' },
                         xAxis: { type: 'category', data: this.weatherData.daily.time },
                         yAxis: { type: 'value', name: '温度 (°C)' },
@@ -407,6 +427,7 @@
             },
             mounted() {
                 this.fetchNews();  // 加载新闻
+                this.getUserLocation();  // 页面加载时获取定位并查询天气
             }
         });
 
