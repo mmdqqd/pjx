@@ -270,23 +270,8 @@
         <div class="card-container">
             <div class="card" :class="{ flipped: isFlipped }">
                 <!-- 正面 - 新闻 -->
-                <div class="card-face card-front">
-                    <h2>⭐{{ newsData ? newsData.date + ' 今日新闻' : '今日新闻' }}⭐</h2>
-                    <div v-if="newsData" class="news-container">
-                        <ul class="news-list">
-                            <li v-for="(item, index) in newsData.content" :key="index">
-                                {{ item }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div v-else class="loading">
-                        <p>新闻加载中...</p>
-                    </div>
-                </div>
-
-                <!-- 背面 - 天气 -->
-                <div class="card-face card-back">
-                    <h2>📅天气查询📅</h2>
+              <div class="card-face card-front">
+                                    <h2>📅天气查询📅</h2>
                     <button @click="showModal = true">选择城市[支持全球语言输入]</button>
                     <div class="news-list">
                     <div class="weather-info" v-if="weatherData">
@@ -298,6 +283,21 @@
                         <p>💬请选择城市查询[稍等本地定位正在启动]💬</p>
                     </div>
                 </div>
+                </div>
+
+                <!-- 背面 - 天气 -->
+                <div class="card-face card-back">
+                    <h2>⭐{{ newsData ? newsData.date + ' 今日新闻' : '今日新闻' }}⭐</h2>
+                    <div v-if="newsData" class="news-container">
+                        <ul class="news-list">
+                            <li v-for="(item, index) in newsData.content" :key="index">
+                                {{ item }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div v-else class="loading">
+                        <p>新闻加载中...</p>
+                    </div>
         </div>
                 <!-- 翻转按钮 -->
                 <button class="flip-button" @click="isFlipped = !isFlipped"></button>
