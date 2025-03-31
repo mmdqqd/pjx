@@ -34,8 +34,8 @@
         }
 
         .card {
-            width: 400px;
-            height: 400px;
+            width: 500px;
+            height: 500px;
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.6s;
@@ -71,7 +71,7 @@
             position: absolute;
             top: 50%;
             right: -20px;
-            transform: translateY(-80%);
+            transform: translateY(-70%);
             width: 40px;
             height: 70px;
             background: #409EFF;
@@ -277,8 +277,7 @@
                     <div class="news-list">
                     <div class="weather-info" v-if="weatherData">
                         <div id="chart" class="chart" ></div>
-                        <p class="current-temp">当前温度：{{ weatherData.current.temperature_2m }}°C</p>
-                        <h3>{{ city }} 天气</h3>
+                        <p class="current-temp">{{ city }} 天气 当前温度：{{ weatherData.current.temperature_2m }}°C</p>
                     </div>
                     <div v-else class="loading">
                         <p>💬请选择城市查询[稍等本地定位正在启动]💬</p>
