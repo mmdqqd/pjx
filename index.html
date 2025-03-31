@@ -276,9 +276,9 @@
                     <button @click="showModal = true">选择城市[支持全球语言输入]</button>
                     <div class="news-list">
                     <div class="weather-info" v-if="weatherData">
-                        <h3>{{ city }} 天气</h3>
-                        <p class="current-temp">当前温度：{{ weatherData.current.temperature_2m }}°C</p>
                         <div id="chart" class="chart" ></div>
+                        <p class="current-temp">当前温度：{{ weatherData.current.temperature_2m }}°C</p>
+                        <h3>{{ city }} 天气</h3>
                     </div>
                     <div v-else class="loading">
                         <p>💬请选择城市查询[稍等本地定位正在启动]💬</p>
